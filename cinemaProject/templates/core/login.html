@@ -1,0 +1,46 @@
+{% extends 'core/base.html' %}
+
+{% block messages %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="d-flex justify-content-center">
+        <p class="text-success text-xl font-weight-bold">{{ message }}</p>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="pt-5 d-flex justify-content-center">
+    <form method="post">
+      {% csrf_token %}
+      <!-- Email input -->
+      {% if form.errors %}
+        <ul>
+        {% for field, errors in form.errors.items %}
+          {% for error in errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        {% endfor %}
+        </ul>
+      {% endif %}
+      <div class="form-outline mb-4">
+        {{ form.username }}
+      </div>
+
+      <!-- Password input -->
+      <div class="form-outline mb-4">
+        {{ form.password }}
+      </div>
+
+         <!-- Register buttons -->
+        <div class="text-center">
+            <p>Not a member? <a href="{% url 'register' %}">Register</a></p>
+        </div>
+
+      <!-- Submit button -->
+      <button type="submit" class="btn btn-primary btn-block mb-4">Sign in</button>
+
+    </form>
+</div>
+{% endblock%}
