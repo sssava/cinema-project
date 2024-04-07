@@ -124,6 +124,10 @@ class Session(models.Model):
     def __str__(self):
         return f"Movie: {self.movie.name}, price: {self.price}, in hall: {self.hall.name}"
 
+    @property
+    def get_available_seats(self):
+        return SessionSeat.objects.filter(session=self).count()
+
 
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name="orders")

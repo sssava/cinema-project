@@ -1,6 +1,6 @@
 from django.urls import path
-from cinema.views import index
+from cinema.views import SessionList
 
 urlpatterns = [
-    path('', index, name='index')
+    path('', SessionList.as_view(), name='index'),
 ]
