@@ -146,7 +146,7 @@ class SessionSeat(models.Model):
         db_table = "session_seat"
 
     def __str__(self):
-        return f"Session: {self.session.name}, Seat: row - {self.seat.row_number}, seat - {self.seat.seat_number}"
+        return f"Session: {self.session.movie}, Seat: row - {self.seat.row_number}, seat - {self.seat.seat_number}"
 
 
 
