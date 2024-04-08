@@ -1,7 +1,10 @@
-from django.shortcuts import render
-from django.views.generic import ListView
-from .models import Session
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.views.generic import ListView, CreateView
+from .models import Session, MovieHall
 from datetime import date
+from .forms import MovieHallCreationForm
+from core.custom_mixins import StaffRequiredMixin
 
 
 class SessionList(ListView):
@@ -12,5 +15,21 @@ class SessionList(ListView):
 
     def get_queryset(self):
         return Session.objects.filter(session_date=date.today()).select_related("hall", "movie")
+
+
+class MovieHallCreationView(StaffRequiredMixin, CreateView):
+    model = MovieHall
+    form_class = MovieHallCreationForm
+    template_name = "cinema/create-movie-hall.html"
+    success_url = '/'
+
+    def form_valid(self, form):
+        messages.success(self.request, "MovieHall have successfully created")
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        errors = form.errors.as_text()
+        messages.error(self.request, errors)
+        return redirect('/')
 
 
