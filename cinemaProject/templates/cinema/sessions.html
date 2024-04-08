@@ -12,6 +12,15 @@
 
 
 {% block content %}
+  {% url 'index' as today %}
+  {% url 'tomorrow' as tomorrow %}
+  {% if request.path == today %}
+    <a class="text-decoration-none m-4 fs-5" href="{% url 'tomorrow' %}">Watch tomorrow sessions</a>
+    <h2 class="m-4 text-center">Today Sessions</h2>
+  {% elif request.path == tomorrow %}
+    <a class="text-decoration-none m-4 fs-5" href="{% url 'index' %}">Watch today sessions</a>
+    <h2 class="m-4 text-center">Tomorrow Sessions</h2>
+  {% endif %}
   <div class="container d-flex flex-wrap m-5">
     {% for session in sessions %}
       <div class="card m-3" style="width: 18rem;">

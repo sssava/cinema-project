@@ -1,5 +1,5 @@
 from django import forms
-from cinema.models import MovieHall
+from cinema.models import MovieHall, Session
 
 
 class MovieHallCreationForm(forms.ModelForm):
@@ -52,3 +52,9 @@ class MovieHallCreationForm(forms.ModelForm):
                 code="name_exists"
             )
         return name
+
+
+class SessionCreationForm(forms.ModelForm):
+    class Meta:
+        model = Session
+        fields = "__all__"
