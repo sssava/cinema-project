@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from .managers import SessionManager
 
 User = get_user_model()
 
@@ -118,6 +119,8 @@ class Session(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     hall = models.ForeignKey(MovieHall, models.PROTECT, related_name='sessions')
 
+    objects = SessionManager()
+
     class Meta:
         db_table = "session"
 
@@ -126,7 +129,7 @@ class Session(models.Model):
 
     @property
     def get_available_seats(self):
-        return SessionSeat.objects.filter(session=self).count()
+        return SessionSeat.objects.filter(session=self, is_booked=False).count()
 
 
 class Order(models.Model):
@@ -144,13 +147,13 @@ class SessionSeat(models.Model):
     session = models.ForeignKey(Session, on_delete=models.DO_NOTHING, related_name="session_seats")
     seat = models.ForeignKey(Seat, on_delete=models.DO_NOTHING, related_name="session_seats")
     is_booked = models.BooleanField(default=False)
-    order = models.OneToOneField(Order, on_delete=models.DO_NOTHING, related_name="session_seats", blank=True, null=True)
+    order = models.ForeignKey(Order, on_delete=models.DO_NOTHING, related_name="session_seats", blank=True, null=True)
 
     class Meta:
         db_table = "session_seat"
 
     def __str__(self):
-        return f"Session: {self.session.movie}, Seat: row - {self.seat.row_number}, seat - {self.seat.seat_number}"
+        return f"Row - {self.seat.row_number}, Seat - {self.seat.seat_number}"
 
 
 

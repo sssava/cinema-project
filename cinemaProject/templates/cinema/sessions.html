@@ -4,7 +4,11 @@
   {% if messages %}
     {% for message in messages %}
       <div class="d-flex justify-content-center">
-        <p class="text-success text-xl font-weight-bold">{{ message }}</p>
+        {% if message.tags == 'success' %}
+          <p class="text-xl font-weight-bold text-success">{{ message }}</p>
+        {% elif message.tags == 'error' %}
+          <p class="text-xl font-weight-bold text-danger">{{ message }}</p>
+        {% endif %}
       </div>
     {% endfor %}
   {% endif %}
@@ -32,6 +36,9 @@
             <p class="card-text fs-3">{{session.price}}$</p>
             <p class="card-text">Available seats: {{ session.get_available_seats }}</p>
           </div>
+          {% if user.is_authenticated %}
+          <a href="{% url 'session-detail' session_id=session.id %}"><button type="button" class="btn btn-primary">Buy ticket</button></a>
+          {% endif %}
         </div>
       </div>
     {% endfor %}

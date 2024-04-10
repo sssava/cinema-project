@@ -1,0 +1,61 @@
+{% extends 'core/base.html' %}
+
+{% block messages %}
+  {% if messages %}
+    {% for message in messages %}
+      <div class="d-flex justify-content-center">
+        {% if message.tags == 'success' %}
+          <p class="text-xl font-weight-bold text-success">{{ message }}</p>
+        {% elif message.tags == 'error' %}
+          <p class="text-xl font-weight-bold text-danger">{{ message }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<h2 class="text-center">Available seats</h2>
+<form method="post">
+    {% csrf_token %}
+    <div class="d-flex flex-wrap">
+        {% for session_seat in session_seats %}
+            <div class="border border-primary m-3 d-flex p-2">
+                <p class="m-3">{{ session_seat }}</p>
+                <input type="checkbox" class="seat-checkbox" name="selected_seats" value="{{ session_seat.id }}" data-price="{{ session.price }}">
+            </div>
+
+        {% endfor %}
+    </div>
+    <div class="m-4">
+        <div class="pb-2 fs-5" id="total-price">Total price: $0</div>
+        <button class="btn btn-success" type="submit">Submit</button>
+    </div>
+
+</form>
+
+<script>
+    // Получаем все чекбоксы
+    const checkboxes = document.querySelectorAll('.seat-checkbox');
+    // Получаем элемент для отображения общей суммы
+    const totalPriceElement = document.getElementById('total-price');
+
+    // Функция для обновления суммы
+    function updateTotalPrice() {
+        let totalPrice = 0;
+        checkboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                // Добавляем стоимость места к общей сумме, если чекбокс отмечен
+                totalPrice += parseFloat(checkbox.dataset.price);
+            }
+        });
+        // Обновляем текст элемента с общей суммой
+        totalPriceElement.textContent = `Total price: $${totalPrice.toFixed(2)}`;
+    }
+
+    // Добавляем обработчики событий для изменения состояния чекбокса
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateTotalPrice);
+    });
+</script>
+{% endblock %}

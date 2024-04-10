@@ -14,3 +14,7 @@ class User(AbstractUser):
         if not self.pk:
             self.money = 200
         super().save(*args, **kwargs)
+
+    def buy_ticket(self, price):
+        self.money -= price
+        self.save()

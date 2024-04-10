@@ -27,7 +27,7 @@ class MovieHallCreationForm(forms.ModelForm):
     }
 
     def clean_rows(self):
-        rows = self.cleaned_data.get('rows')
+        rows = self.cleaned_data['rows']
         if rows <= 0:
             raise forms.ValidationError(
                 self.error_messages["invalid_count"],
@@ -37,7 +37,7 @@ class MovieHallCreationForm(forms.ModelForm):
         return rows
 
     def clean_seats_per_row(self):
-        seats_per_row = self.cleaned_data.get('seats_per_row')
+        seats_per_row = self.cleaned_data['seats_per_row']
         if seats_per_row <= 0:
             raise forms.ValidationError(
                 self.error_messages["invalid_count"],
@@ -47,7 +47,7 @@ class MovieHallCreationForm(forms.ModelForm):
         return seats_per_row
 
     def clean_name(self):
-        name = self.cleaned_data.get('name')
+        name = self.cleaned_data['name']
         if MovieHall.objects.filter(name__iexact=name).exists():
             raise forms.ValidationError(
                 self.error_messages["name_exists"],
@@ -95,40 +95,31 @@ class SessionCreationForm(forms.ModelForm):
     #     return session_date
 
     def clean_price(self):
-        price = self.cleaned_data.get('price')
+        price = self.cleaned_data['price']
         if price <= 0:
             raise forms.ValidationError(
                 self.error_messages['invalid_price'],
                 code='invalid_price'
             )
+        return price
 
     def clean(self):
         cleaned_data = super().clean()
-        session_date = cleaned_data.get('session_date')
-        date_start = cleaned_data.get('date_start')
-        date_end = cleaned_data.get('date_end')
-        time_start = cleaned_data.get('time_start')
-        time_end = cleaned_data.get('time_end')
-        hall = cleaned_data.get('hall')
+        session_date = cleaned_data['session_date']
+        date_start = cleaned_data['date_start']
+        date_end = cleaned_data['date_end']
+        time_start = cleaned_data['time_start']
+        time_end = cleaned_data['time_end']
+        hall = cleaned_data['hall']
         if isinstance(session_date, date) and isinstance(date_start, date) and isinstance(date_end, date):
             if not (date_start <= session_date <= date_end):
                 raise forms.ValidationError(
                     self.error_messages['invalid_date'],
                     code='invalid_date'
                 )
-            exists_sessions_by_time_end = Session.objects.filter(
-                Q(time_start__lte=time_end) & Q(time_end__gte=time_end),
-                hall=hall,
-                session_date=session_date
-            ).exists()
 
-            exists_sessions_by_time_start = Session.objects.filter(
-                Q(time_start__lte=time_start) & Q(time_end__gte=time_start),
-                hall=hall,
-                session_date=session_date
-            ).exists()
-
-            if exists_sessions_by_time_end or exists_sessions_by_time_start:
+            if (Session.objects.exists_session_by_time(time_end, session_date, hall)
+                    or Session.objects.exists_session_by_time(time_start, session_date, hall)):
                 raise forms.ValidationError(
                     self.error_messages['invalid_session'],
                     code='invalid_session'
