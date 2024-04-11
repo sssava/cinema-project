@@ -96,6 +96,30 @@ class MovieHall(models.Model):
     def __str__(self):
         return f"Name: {self.name}, Rows: {self.rows}, Seats per row: {self.seats_per_row}"
 
+    def create_seats_for_hall(self):
+        seats = []
+        for row in range(1, self.rows + 1):
+            for seat in range(1, self.seats_per_row + 1):
+                seats.append(Seat(row_number=row, seat_number=seat, hall=self))
+        Seat.objects.bulk_create(seats)
+
+    def is_updateble(self):
+        sessions = Session.objects.filter(hall=self)
+        if sessions:
+            for session in sessions:
+                if session.session_seats.filter(is_booked=True).exists():
+                    return False
+            return True
+
+    def delete_session_seats(self):
+        if self.is_updateble():
+            self.seats.filter(hall=self).delete()
+
+    def update_seats_for_hall(self):
+        self.create_seats_for_hall()
+        for session in self.sessions.all():
+            session.create_session_seats()
+
 
 class Seat(models.Model):
     row_number = models.IntegerField()
@@ -131,6 +155,14 @@ class Session(models.Model):
     def get_available_seats(self):
         return SessionSeat.objects.filter(session=self, is_booked=False).count()
 
+    def create_session_seats(self):
+        session_seats = []
+        hall = self.hall
+        seats = Seat.objects.filter(hall=hall).order_by('pk')
+        for seat in seats:
+            session_seats.append(SessionSeat(session=self, seat=seat))
+        SessionSeat.objects.bulk_create(session_seats)
+
 
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING, related_name="orders")
@@ -145,7 +177,7 @@ class Order(models.Model):
 
 class SessionSeat(models.Model):
     session = models.ForeignKey(Session, on_delete=models.DO_NOTHING, related_name="session_seats")
-    seat = models.ForeignKey(Seat, on_delete=models.DO_NOTHING, related_name="session_seats")
+    seat = models.ForeignKey(Seat, on_delete=models.CASCADE, related_name="session_seats")
     is_booked = models.BooleanField(default=False)
     order = models.ForeignKey(Order, on_delete=models.DO_NOTHING, related_name="session_seats", blank=True, null=True)
 

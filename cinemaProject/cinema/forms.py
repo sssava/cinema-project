@@ -56,6 +56,49 @@ class MovieHallCreationForm(forms.ModelForm):
         return name
 
 
+class MovieHallUpdateForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].widget = forms.TextInput(
+            attrs={'class': 'form-control input-md', 'placeholder': 'Enter hall name'}
+        )
+        self.fields['rows'].widget = forms.NumberInput(
+            attrs={'class': 'form-control input-md', 'placeholder': 'Enter hall rows'}
+        )
+        self.fields['seats_per_row'].widget = forms.NumberInput(
+            attrs={'class': 'form-control input-md', 'placeholder': 'Enter hall seats per row'}
+        )
+
+    class Meta:
+        model = MovieHall
+        fields = "__all__"
+
+    error_messages = {
+        "invalid_count": "Count should be bigger than 0",
+        "name_exists": "Hall with that name already exists"
+    }
+
+    def clean_rows(self):
+        rows = self.cleaned_data['rows']
+        if rows <= 0:
+            raise forms.ValidationError(
+                self.error_messages["invalid_count"],
+                code="invalid_count",
+            )
+
+        return rows
+
+    def clean_seats_per_row(self):
+        seats_per_row = self.cleaned_data['seats_per_row']
+        if seats_per_row <= 0:
+            raise forms.ValidationError(
+                self.error_messages["invalid_count"],
+                code="invalid_count",
+            )
+
+        return seats_per_row
+
+
 class SessionCreationForm(forms.ModelForm):
     class Meta:
         model = Session
@@ -66,33 +109,6 @@ class SessionCreationForm(forms.ModelForm):
         "invalid_session": "session on this time in that hall already exists",
         "invalid_price": "price should be bigger than 0"
     }
-
-    # def clean_date_start(self):
-    #     date_start = self.cleaned_data.get('date_start')
-    #     if not isinstance(date_start, datetime):
-    #         raise forms.ValidationError(
-    #             self.error_messages['invalid_date_format'],
-    #             code="invalid_date_format"
-    #         )
-    #     return date_start
-    #
-    # def clean_date_end(self):
-    #     date_end = self.cleaned_data.get('date_end')
-    #     if not isinstance(date_end, datetime):
-    #         raise forms.ValidationError(
-    #             self.error_messages['invalid_date_format'],
-    #             code="invalid_date_format"
-    #         )
-    #     return date_end
-    #
-    # def clean_session_date(self):
-    #     session_date = self.cleaned_data.get('session_date')
-    #     if not isinstance(session_date, datetime):
-    #         raise forms.ValidationError(
-    #             self.error_messages['invalid_date_format'],
-    #             code="invalid_date_format"
-    #         )
-    #     return session_date
 
     def clean_price(self):
         price = self.cleaned_data['price']

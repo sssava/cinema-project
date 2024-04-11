@@ -2,10 +2,10 @@ from datetime import datetime
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
-from django.views.generic import ListView, CreateView, DetailView
+from django.views.generic import ListView, CreateView, DetailView, UpdateView
 from .models import Session, MovieHall
 from datetime import date, timedelta
-from .forms import MovieHallCreationForm, SessionCreationForm
+from .forms import MovieHallCreationForm, SessionCreationForm, MovieHallUpdateForm
 from core.custom_mixins import StaffRequiredMixin
 from .utils import create_order, is_buying
 
@@ -41,8 +41,12 @@ class MovieHallCreationView(StaffRequiredMixin, CreateView):
     success_url = '/'
 
     def form_valid(self, form):
+        response = super().form_valid(form)
         messages.success(self.request, "MovieHall has successfully created")
-        return super().form_valid(form)
+        instance = self.object
+        hall = MovieHall.objects.get(pk=instance.pk)
+        hall.create_seats_for_hall()
+        return response
 
     def form_invalid(self, form):
         errors = form.errors.as_text()
@@ -57,8 +61,12 @@ class SessionCreationView(StaffRequiredMixin, CreateView):
     success_url = "/"
 
     def form_valid(self, form):
+        response = super().form_valid(form)
         messages.success(self.request, "Session has successfully created")
-        return super().form_valid(form)
+        instance = self.object
+        session = Session.objects.get(pk=instance.pk)
+        session.create_session_seats()
+        return response
 
     def form_invalid(self, form):
         errors = form.errors.as_text()
@@ -91,8 +99,31 @@ class SessionDetail(LoginRequiredMixin, DetailView):
         return context
 
 
+class MovieHallUpdateView(StaffRequiredMixin, UpdateView):
+    form_class = MovieHallUpdateForm
+    model = MovieHall
+    template_name = "cinema/update-hall.html"
+    success_url = "/"
 
+    def form_valid(self, form):
+        form_instance = form.save(commit=False)
+        form_instance.delete_session_seats()
+        response = super().form_valid(form)
+        instance = self.object
+        hall = MovieHall.objects.get(pk=instance.pk)
+        hall.update_seats_for_hall()
+        messages.success(self.request, "Hall has successfully updated")
+        return response
 
+    def form_invalid(self, form):
+        errors = form.errors.as_text()
+        messages.error(self.request, errors)
+        return redirect('/')
 
-
+    def dispatch(self, request, *args, **kwargs):
+        hall_instance = self.get_object()
+        if not hall_instance.is_updateble():
+            messages.error(request, "This hall can`t be updated, because it has booked sessions")
+            return redirect("index")
+        return super().dispatch(request, *args, **kwargs)
 
