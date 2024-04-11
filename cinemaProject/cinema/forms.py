@@ -140,3 +140,47 @@ class SessionCreationForm(forms.ModelForm):
                     self.error_messages['invalid_session'],
                     code='invalid_session'
                 )
+
+
+class SessionUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Session
+        fields = "__all__"
+
+    error_messages = {
+        "invalid_date": "session date should be between start date and end date",
+        "invalid_session": "session on this time in that hall already exists",
+        "invalid_price": "price should be bigger than 0"
+    }
+
+    def clean_price(self):
+        price = self.cleaned_data['price']
+        if price <= 0:
+            raise forms.ValidationError(
+                self.error_messages['invalid_price'],
+                code='invalid_price'
+            )
+        return price
+
+    def clean(self):
+        cleaned_data = super().clean()
+        session_date = cleaned_data['session_date']
+        date_start = cleaned_data['date_start']
+        date_end = cleaned_data['date_end']
+        time_start = cleaned_data['time_start']
+        time_end = cleaned_data['time_end']
+        hall = cleaned_data['hall']
+        instance = self.instance
+        if isinstance(session_date, date) and isinstance(date_start, date) and isinstance(date_end, date):
+            if not (date_start <= session_date <= date_end):
+                raise forms.ValidationError(
+                    self.error_messages['invalid_date'],
+                    code='invalid_date'
+                )
+
+            if (Session.objects.exists_session_by_time(time_end, session_date, hall, session_pk=instance.pk)
+                    or Session.objects.exists_session_by_time(time_start, session_date, hall, session_pk=instance.pk)):
+                raise forms.ValidationError(
+                    self.error_messages['invalid_session'],
+                    code='invalid_session'
+                )

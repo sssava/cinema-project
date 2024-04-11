@@ -5,7 +5,7 @@ from django.shortcuts import redirect
 from django.views.generic import ListView, CreateView, DetailView, UpdateView
 from .models import Session, MovieHall
 from datetime import date, timedelta
-from .forms import MovieHallCreationForm, SessionCreationForm, MovieHallUpdateForm
+from .forms import MovieHallCreationForm, SessionCreationForm, MovieHallUpdateForm, SessionUpdateForm
 from core.custom_mixins import StaffRequiredMixin
 from .utils import create_order, is_buying
 
@@ -107,7 +107,7 @@ class MovieHallUpdateView(StaffRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         form_instance = form.save(commit=False)
-        form_instance.delete_session_seats()
+        form_instance.delete_seats_and_session_seats()
         response = super().form_valid(form)
         instance = self.object
         hall = MovieHall.objects.get(pk=instance.pk)
@@ -122,8 +122,51 @@ class MovieHallUpdateView(StaffRequiredMixin, UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         hall_instance = self.get_object()
-        if not hall_instance.is_updateble():
+        if not hall_instance.is_updateble_hall():
             messages.error(request, "This hall can`t be updated, because it has booked sessions")
             return redirect("index")
         return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        hall_instance = self.get_object()
+        if not hall_instance.is_updateble_hall():
+            messages.error(request, "This hall can`t be updated, because it has booked sessions")
+            return redirect("index")
+        return super().post(request, *args, **kwargs)
+
+
+class SessionUpdateView(StaffRequiredMixin, UpdateView):
+    model = Session
+    form_class = SessionUpdateForm
+    template_name = "cinema/update-session.html"
+    success_url = "/"
+
+    def form_valid(self, form):
+        form_instance = form.save(commit=False)
+        form_instance.delete_session_seats()
+        response = super().form_valid(form)
+        instance = self.object
+        session = Session.objects.get(pk=instance.pk)
+        session.create_session_seats()
+        messages.success(self.request, "Session has successfully updated")
+        return response
+
+    def form_invalid(self, form):
+        errors = form.errors.as_text()
+        messages.error(self.request, errors)
+        return redirect('/')
+
+    def dispatch(self, request, *args, **kwargs):
+        session_instance = self.get_object()
+        if not session_instance.is_updateble_session():
+            messages.error(request, "This session can`t be updated, because it has booked seats")
+            return redirect("index")
+        return super().dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        session_instance = self.get_object()
+        if not session_instance.is_updateble_session():
+            messages.error(request, "This session can`t be updated, because it has booked seats")
+            return redirect("index")
+        return super().post(request, *args, **kwargs)
 

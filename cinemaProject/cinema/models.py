@@ -103,7 +103,7 @@ class MovieHall(models.Model):
                 seats.append(Seat(row_number=row, seat_number=seat, hall=self))
         Seat.objects.bulk_create(seats)
 
-    def is_updateble(self):
+    def is_updateble_hall(self):
         sessions = Session.objects.filter(hall=self)
         if sessions:
             for session in sessions:
@@ -111,8 +111,8 @@ class MovieHall(models.Model):
                     return False
             return True
 
-    def delete_session_seats(self):
-        if self.is_updateble():
+    def delete_seats_and_session_seats(self):
+        if self.is_updateble_hall():
             self.seats.filter(hall=self).delete()
 
     def update_seats_for_hall(self):
@@ -162,6 +162,13 @@ class Session(models.Model):
         for seat in seats:
             session_seats.append(SessionSeat(session=self, seat=seat))
         SessionSeat.objects.bulk_create(session_seats)
+
+    def is_updateble_session(self):
+        return not self.session_seats.filter(is_booked=True).exists()
+
+    def delete_session_seats(self):
+        if self.is_updateble_session():
+            self.session_seats.all().delete()
 
 
 class Order(models.Model):

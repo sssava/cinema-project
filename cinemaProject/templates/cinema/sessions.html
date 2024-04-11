@@ -38,10 +38,14 @@
           </div>
           {% if user.is_authenticated %}
           <a href="{% url 'session-detail' session_id=session.id %}"><button type="button" class="btn btn-primary">Buy ticket</button></a>
-          {% if session.hall.is_updateble %}
-            <a href="{% url 'update-hall' pk=session.hall.id %}"><button type="button" class="btn btn-primary">Update Hall</button></a>
-          {% endif %}
-
+              {% if user.is_staff %}
+                  {% if session.hall.is_updateble_hall %}
+                    <a href="{% url 'update-hall' pk=session.hall.id %}"><button type="button" class="btn btn-primary">Update Hall</button></a>
+                  {% endif %}
+                  {% if session.is_updateble_session %}
+                    <a href="{% url 'update-session' pk=session.id %}"><button type="button" class="btn btn-primary">Update Session</button></a>
+                  {% endif %}
+              {% endif %}
           {% endif %}
         </div>
       </div>

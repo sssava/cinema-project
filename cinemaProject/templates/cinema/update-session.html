@@ -1,0 +1,25 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+    <div class="container">
+      <form class="form-horizontal" method="post">
+        {% csrf_token %}
+        <fieldset>
+
+          <!-- Form Name -->
+          <legend>Session</legend>
+          {% for f in form %}
+            <!-- Text input-->
+            <div class="form-group">
+              <label class="col-md-4 control-label">Session {{ f.label }}</label>
+              <div class="col-md-4">
+                {{ f }}
+              </div>
+            </div>
+          {% endfor %}
+
+          <button type="submit" class="btn btn-success mt-4">Update</button>
+        </fieldset>
+      </form>
+    </div>
+{% endblock %}
