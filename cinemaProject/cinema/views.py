@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import redirect
 from django.views.generic import ListView, CreateView, DetailView, UpdateView
-from .models import Session, MovieHall
+from .models import Session, MovieHall, Order, SessionSeat
 from datetime import date, timedelta
 from .forms import MovieHallCreationForm, SessionCreationForm, MovieHallUpdateForm, SessionUpdateForm
 from core.custom_mixins import StaffRequiredMixin
@@ -43,8 +43,7 @@ class MovieHallCreationView(StaffRequiredMixin, CreateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, "MovieHall has successfully created")
-        instance = self.object
-        hall = MovieHall.objects.get(pk=instance.pk)
+        hall = self.object
         hall.create_seats_for_hall()
         return response
 
@@ -63,8 +62,7 @@ class SessionCreationView(StaffRequiredMixin, CreateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         messages.success(self.request, "Session has successfully created")
-        instance = self.object
-        session = Session.objects.get(pk=instance.pk)
+        session = self.object
         session.create_session_seats()
         return response
 
@@ -109,8 +107,7 @@ class MovieHallUpdateView(StaffRequiredMixin, UpdateView):
         form_instance = form.save(commit=False)
         form_instance.delete_seats_and_session_seats()
         response = super().form_valid(form)
-        instance = self.object
-        hall = MovieHall.objects.get(pk=instance.pk)
+        hall = self.object
         hall.update_seats_for_hall()
         messages.success(self.request, "Hall has successfully updated")
         return response
@@ -145,8 +142,7 @@ class SessionUpdateView(StaffRequiredMixin, UpdateView):
         form_instance = form.save(commit=False)
         form_instance.delete_session_seats()
         response = super().form_valid(form)
-        instance = self.object
-        session = Session.objects.get(pk=instance.pk)
+        session = self.object
         session.create_session_seats()
         messages.success(self.request, "Session has successfully updated")
         return response
@@ -170,3 +166,13 @@ class SessionUpdateView(StaffRequiredMixin, UpdateView):
             return redirect("index")
         return super().post(request, *args, **kwargs)
 
+
+class UserOrdersView(LoginRequiredMixin, ListView):
+    model = SessionSeat
+    context_object_name = "session_seats"
+    template_name = "cinema/orders.html"
+    login_url = "login"
+    paginate_by = 8
+
+    def get_queryset(self):
+        return SessionSeat.objects.select_related("order", "session__movie", "seat").filter(order__user=self.request.user)

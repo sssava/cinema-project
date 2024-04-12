@@ -121,11 +121,11 @@ class SessionCreationForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        session_date = cleaned_data['session_date']
-        date_start = cleaned_data['date_start']
-        date_end = cleaned_data['date_end']
-        time_start = cleaned_data['time_start']
-        time_end = cleaned_data['time_end']
+        session_date = cleaned_data.get('session_date')
+        date_start = cleaned_data.get('date_start')
+        date_end = cleaned_data.get('date_end')
+        time_start = cleaned_data.get('time_start')
+        time_end = cleaned_data.get('time_end')
         hall = cleaned_data['hall']
         if isinstance(session_date, date) and isinstance(date_start, date) and isinstance(date_end, date):
             if not (date_start <= session_date <= date_end):
@@ -164,12 +164,12 @@ class SessionUpdateForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        session_date = cleaned_data['session_date']
-        date_start = cleaned_data['date_start']
-        date_end = cleaned_data['date_end']
-        time_start = cleaned_data['time_start']
-        time_end = cleaned_data['time_end']
-        hall = cleaned_data['hall']
+        session_date = cleaned_data.get('session_date')
+        date_start = cleaned_data.get('date_start')
+        date_end = cleaned_data.get('date_end')
+        time_start = cleaned_data.get('time_start')
+        time_end = cleaned_data.get('time_end')
+        hall = cleaned_data.get('hall')
         instance = self.instance
         if isinstance(session_date, date) and isinstance(date_start, date) and isinstance(date_end, date):
             if not (date_start <= session_date <= date_end):

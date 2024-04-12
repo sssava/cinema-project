@@ -10,7 +10,7 @@ class AutoLogoutMiddleware(MiddlewareMixin):
             if not request.user.is_staff:
                 last_activity = request.session.get('last_activity')
                 last_activity_from_iso = datetime.fromisoformat(last_activity)
-                if last_activity_from_iso and datetime.now() - last_activity_from_iso > timedelta(seconds=10):
+                if last_activity_from_iso and datetime.now() - last_activity_from_iso > timedelta(minutes=1):
                     logout(request)
                     return redirect('/login/')
                 else:

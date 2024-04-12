@@ -1,0 +1,27 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+    <p class="m-2 fs-4 ">Total spent sum: {{ request.user.total_spent }}$</p>
+    {% if session_seats %}
+        <div class="container d-flex flex-wrap m-5">
+            {% for session_seat in session_seats %}
+                <div class="card m-3" style="width: 18rem;">
+                  <img src="{{ session_seat.session.movie.image.url }}" class="card-img-top" alt="...">
+                  <div class="card-body">
+                    <h5 class="card-title">{{ session_seat.session.movie.name }}</h5>
+                  </div>
+                  <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Purchase price: {{ session_seat.order.purchase_price }}$</li>
+                    <li class="list-group-item">{{ session_seat.seat }}</li>
+                    <li class="list-group-item">{{ session_seat.session.session_date }}</li>
+                  </ul>
+                </div>
+            {% endfor %}
+        </div>
+        {% block paginate %}
+            {% include 'core/paginate.html' %}
+        {% endblock %}
+    {% else %}
+        <h2 class="text-center">You have not orders</h2>
+    {% endif %}
+{% endblock %}

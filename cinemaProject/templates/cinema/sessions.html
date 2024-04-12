@@ -43,7 +43,7 @@
                     <a href="{% url 'update-hall' pk=session.hall.id %}"><button type="button" class="btn btn-primary">Update Hall</button></a>
                   {% endif %}
                   {% if session.is_updateble_session %}
-                    <a href="{% url 'update-session' pk=session.id %}"><button type="button" class="btn btn-primary">Update Session</button></a>
+                    <a href="{% url 'update-session' pk=session.id %}"><button type="button" class="btn btn-primary mt-2">Update Session</button></a>
                   {% endif %}
               {% endif %}
           {% endif %}
@@ -52,21 +52,7 @@
     {% endfor %}
   </div>
 
-  <div class="pagination d-flex justify-content-center mb-5 fs-3">
-      <span class="step-links">
-          {% if page_obj.has_previous %}
-              <a class="page-item" href="?page=1">&laquo; first</a>
-              <a class="page-item" href="?page={{ page_obj.previous_page_number }}">previous</a>
-          {% endif %}
-
-          <span class="current">
-              Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
-          </span>
-
-          {% if page_obj.has_next %}
-              <a href="?page={{ page_obj.next_page_number }}">next</a>
-              <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
-          {% endif %}
-      </span>
-  </div>
+  {% block paginate %}
+    {% include 'core/paginate.html' %}
+  {% endblock %}
 {% endblock %}

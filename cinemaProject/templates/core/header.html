@@ -10,6 +10,9 @@
           <li class="nav-item">
             <a class="nav-link active" aria-current="page" href="#">{{ user.username }}</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link active" aria-current="page" href="{% url 'orders' %}">Orders</a>
+          </li>
           {% if user.is_staff %}
             <li class="nav-item">
               <a class="nav-link active" aria-current="page" href="{% url 'create-movie-hall' %}">Create Hall</a>

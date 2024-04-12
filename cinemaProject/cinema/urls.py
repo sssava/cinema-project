@@ -6,7 +6,8 @@ from cinema.views import (
     SessionCreationView,
     SessionDetail,
     MovieHallUpdateView,
-    SessionUpdateView
+    SessionUpdateView,
+    UserOrdersView
 )
 
 urlpatterns = [
@@ -17,4 +18,5 @@ urlpatterns = [
     path('session/<int:session_id>/', SessionDetail.as_view(), name="session-detail"),
     path('update-hall/<int:pk>/', MovieHallUpdateView.as_view(), name="update-hall"),
     path('update-session/<int:pk>', SessionUpdateView.as_view(), name="update-session"),
+    path('orders/', UserOrdersView.as_view(), name="orders"),
 ]
