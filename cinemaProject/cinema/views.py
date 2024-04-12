@@ -7,7 +7,7 @@ from .models import Session, MovieHall, Order, SessionSeat
 from datetime import date, timedelta
 from .forms import MovieHallCreationForm, SessionCreationForm, MovieHallUpdateForm, SessionUpdateForm
 from core.custom_mixins import StaffRequiredMixin
-from .utils import create_order, is_buying
+from .utils import create_order, is_buying, sort_by_price_or_time_start
 
 
 class SessionListToday(ListView):
@@ -17,10 +17,12 @@ class SessionListToday(ListView):
     paginate_by = 8
 
     def get_queryset(self):
-        return Session.objects.filter(
+        sessions = Session.objects.filter(
             session_date=date.today(),
             time_start__gte=datetime.now().time()
         ).select_related("hall", "movie")
+
+        return sort_by_price_or_time_start(self.request, sessions)
 
 
 class SessionListTomorrow(ListView):
@@ -31,7 +33,8 @@ class SessionListTomorrow(ListView):
 
     def get_queryset(self):
         tomorrow = date.today() + timedelta(days=1)
-        return Session.objects.filter(session_date=tomorrow).select_related("hall", "movie")
+        sessions = Session.objects.filter(session_date=tomorrow).select_related("hall", "movie")
+        return sort_by_price_or_time_start(self.request, sessions)
 
 
 class MovieHallCreationView(StaffRequiredMixin, CreateView):

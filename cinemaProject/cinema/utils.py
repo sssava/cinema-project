@@ -33,3 +33,20 @@ def is_buying(request, selected_seats, session):
     count_seats = len(selected_seats)
     session_price = session.price
     return count_seats * session_price <= request.user.money
+
+
+def sort_by_price_or_time_start(request, sessions):
+    sort_by = request.GET.get('sort_by')
+
+    if sort_by == "price_asc":
+        sessions = sessions.order_by('price')
+    elif sort_by == "price_desc":
+        sessions = sessions.order_by('-price')
+    elif sort_by == "time_start_asc":
+        sessions = sessions.order_by('time_start')
+    elif sort_by == "time_start_desc":
+        sessions = sessions.order_by('-time_start')
+    elif sort_by == "default":
+        return sessions
+
+    return sessions

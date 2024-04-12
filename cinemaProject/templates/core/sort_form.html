@@ -1,0 +1,11 @@
+<form class="m-2" action="{% url page %}" method="get">
+      <label for="sort_by">Sort by:</label>
+      <select name="sort_by" id="sort_by">
+          <option value="default" {% if request.GET.sort_by == 'default' %}selected{% endif %}>Default</option>
+          <option value="price_asc" {% if request.GET.sort_by == 'price_asc' %}selected{% endif %}>Price ASC</option>
+          <option value="price_desc" {% if request.GET.sort_by == 'price_desc' %}selected{% endif %}>Price DESC</option>
+          <option value="time_start_asc" {% if request.GET.sort_by == 'time_start_asc' %}selected{% endif %}>Start Time ASC</option>
+          <option value="time_start_desc" {% if request.GET.sort_by == 'time_start_desc' %}selected{% endif %}>Start Time DESC</option>
+      </select>
+      <input class="btn btn-primary m-3" type="submit" value="Sort">
+  </form>
