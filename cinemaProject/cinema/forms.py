@@ -1,4 +1,4 @@
-from datetime import date, time
+from datetime import date, time, datetime
 from django.db.models import Q
 from django import forms
 from cinema.models import MovieHall, Session
@@ -107,7 +107,8 @@ class SessionCreationForm(forms.ModelForm):
     error_messages = {
         "invalid_date": "session date should be between start date and end date",
         "invalid_session": "session on this time in that hall already exists",
-        "invalid_price": "price should be bigger than 0"
+        "invalid_price": "price should be bigger than 0",
+        "invalid_time": "invalid format time"
     }
 
     def clean_price(self):
@@ -133,13 +134,13 @@ class SessionCreationForm(forms.ModelForm):
                     self.error_messages['invalid_date'],
                     code='invalid_date'
                 )
-
-            if (Session.objects.exists_session_by_time(time_end, session_date, hall)
-                    or Session.objects.exists_session_by_time(time_start, session_date, hall)):
-                raise forms.ValidationError(
-                    self.error_messages['invalid_session'],
-                    code='invalid_session'
-                )
+            if isinstance(time_start, time) and isinstance(time_end, time):
+                if (Session.objects.exists_session_by_time(time_end, session_date, hall)
+                        or Session.objects.exists_session_by_time(time_start, session_date, hall)):
+                    raise forms.ValidationError(
+                        self.error_messages['invalid_session'],
+                        code='invalid_session'
+                    )
 
 
 class SessionUpdateForm(forms.ModelForm):
@@ -150,7 +151,8 @@ class SessionUpdateForm(forms.ModelForm):
     error_messages = {
         "invalid_date": "session date should be between start date and end date",
         "invalid_session": "session on this time in that hall already exists",
-        "invalid_price": "price should be bigger than 0"
+        "invalid_price": "price should be bigger than 0",
+        "invalid_time": "invalid format time"
     }
 
     def clean_price(self):
@@ -161,6 +163,15 @@ class SessionUpdateForm(forms.ModelForm):
                 code='invalid_price'
             )
         return price
+
+    # def clean_time_start(self):
+    #     time_start = self.cleaned_data.get('time_start')
+    #     if not isinstance(time_start, time):
+    #         raise forms.ValidationError(
+    #             self.error_messages['invalid_time'],
+    #             code="invalid_time"
+    #         )
+    #     return time_start
 
     def clean(self):
         cleaned_data = super().clean()
@@ -178,9 +189,15 @@ class SessionUpdateForm(forms.ModelForm):
                     code='invalid_date'
                 )
 
-            if (Session.objects.exists_session_by_time(time_end, session_date, hall, session_pk=instance.pk)
-                    or Session.objects.exists_session_by_time(time_start, session_date, hall, session_pk=instance.pk)):
+            if isinstance(time_start, time) and isinstance(time_end, time):
+                if (Session.objects.exists_session_by_time(time_end, session_date, hall, session_pk=instance.pk)
+                        or Session.objects.exists_session_by_time(time_start, session_date, hall, session_pk=instance.pk)):
+                    raise forms.ValidationError(
+                        self.error_messages['invalid_session'],
+                        code='invalid_session'
+                    )
+            else:
                 raise forms.ValidationError(
-                    self.error_messages['invalid_session'],
-                    code='invalid_session'
+                    self.error_messages['invalid_time'],
+                    code="invalid_time"
                 )
