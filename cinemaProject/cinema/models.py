@@ -110,6 +110,7 @@ class MovieHall(models.Model):
                 if session.session_seats.filter(is_booked=True).exists():
                     return False
             return True
+        return True
 
     def delete_seats_and_session_seats(self):
         if self.is_updateble_hall():

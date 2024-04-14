@@ -98,6 +98,15 @@ class MovieHallUpdateForm(forms.ModelForm):
 
         return seats_per_row
 
+    def clean_name(self):
+        name = self.cleaned_data['name']
+        if MovieHall.objects.filter(name__iexact=name).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError(
+                self.error_messages["name_exists"],
+                code="name_exists"
+            )
+        return name
+
 
 class SessionCreationForm(forms.ModelForm):
     class Meta:
