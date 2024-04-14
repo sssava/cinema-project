@@ -94,6 +94,13 @@ class SessionDetail(LoginRequiredMixin, DetailView):
 
         return redirect('session-detail', session_id=session_id)
 
+    def get(self, request, *args, **kwargs):
+        session = self.get_object()
+        if not session.session_seats.filter(is_booked=False).exists():
+            messages.error(request, "Seats on that session are sold")
+            return redirect("index")
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["session_seats"] = self.object.session_seats.filter(is_booked=False)

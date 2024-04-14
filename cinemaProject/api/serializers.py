@@ -1,6 +1,8 @@
+from datetime import date, time
+
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from cinema.models import MovieHall
+from cinema.models import MovieHall, Session
 from rest_framework.authtoken.models import Token
 
 User = get_user_model()
@@ -93,3 +95,85 @@ class MovieHallSerializer(serializers.ModelSerializer):
             return name
         return name
 
+
+class SessionSerializer(serializers.ModelSerializer):
+    url = serializers.HyperlinkedIdentityField(read_only=True, view_name="session-detail")
+
+    class Meta:
+        model = Session
+        fields = [
+            "id",
+            "url",
+            "movie",
+            "time_start",
+            "time_end",
+            "date_start",
+            "date_end",
+            "session_date",
+            "price",
+            "hall"
+        ]
+
+    default_error_messages = {
+        "invalid_date": "session date should be between start date and end date",
+        "invalid_session": "session on this time in that hall already exists",
+        "invalid_price": "price should be bigger than 0",
+        "invalid_time": "invalid format time"
+    }
+
+    def create(self, validated_data):
+        session = Session.objects.create(**validated_data)
+        session.create_session_seats()
+        return session
+
+    def update(self, instance, validated_data):
+        instance.delete_session_seats()
+        instance = super().update(instance, validated_data)
+        instance.create_session_seats()
+        return instance
+
+    def validate_price(self, price):
+        if price <= 0:
+            raise serializers.ValidationError(
+                self.error_messages['invalid_price'],
+                code='invalid_price'
+            )
+        return price
+
+    def validate(self, data):
+        session_date = data.get('session_date')
+        date_start = data.get('date_start')
+        date_end = data.get('date_end')
+        time_start = data.get('time_start')
+        time_end = data.get('time_end')
+        hall = data['hall']
+        instance = self.instance
+        if isinstance(session_date, date) and isinstance(date_start, date) and isinstance(date_end, date):
+            if not (date_start <= session_date <= date_end):
+                raise serializers.ValidationError(
+                    self.default_error_messages['invalid_date'],
+                    code='invalid_date'
+                )
+            if self.context['view'].action == "create":
+                if isinstance(time_start, time) and isinstance(time_end, time):
+                    if (Session.objects.exists_session_by_time(time_end, session_date, hall)
+                            or Session.objects.exists_session_by_time(time_start, session_date, hall)):
+                        raise serializers.ValidationError(
+                            self.default_error_messages['invalid_session'],
+                            code=["invalid_session"]
+                        )
+            if self.context['view'].action == "update":
+                if isinstance(time_start, time) and isinstance(time_end, time):
+                    if (Session.objects.exists_session_by_time(time_end, session_date, hall, session_pk=instance.pk)
+                            or Session.objects.exists_session_by_time(time_start, session_date, hall,
+                                                                      session_pk=instance.pk)):
+                        raise serializers.ValidationError(
+                            self.default_error_messages['invalid_session'],
+                            code='invalid_session'
+                        )
+                else:
+                    raise serializers.ValidationError(
+                        self.default_error_messages['invalid_time'],
+                        code="invalid_time"
+                    )
+        return data

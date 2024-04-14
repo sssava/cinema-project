@@ -1,12 +1,13 @@
 from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView, TokenVerifyView
 from rest_framework import routers
-from api.views import UserViewSet, AuthViewSet, MovieHallViewSet
+from api.views import UserViewSet, AuthViewSet, MovieHallViewSet, SessionViewSet
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'auth', AuthViewSet)
 router.register(r'halls', MovieHallViewSet)
+router.register(r"sessions", SessionViewSet)
 
 urlpatterns = [
     path('api/', include(router.urls)),

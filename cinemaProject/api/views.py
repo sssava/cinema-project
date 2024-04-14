@@ -4,7 +4,8 @@ from api.serializers import (
     UserLoginSerializer,
     LogoutUserSerializer,
     AuthUserSerializer,
-    MovieHallSerializer
+    MovieHallSerializer,
+    SessionSerializer,
 )
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from rest_framework import viewsets, permissions, status, serializers
@@ -13,7 +14,7 @@ from api.custom_permissions import IsOwnerOrAdminOnly, IsStaffOnly
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from cinema.models import MovieHall
+from cinema.models import MovieHall, Session
 
 User = get_user_model()
 
@@ -105,3 +106,26 @@ class MovieHallViewSet(viewsets.ModelViewSet):
         message = "Method PUT is not available for that hall"
         return Response({"message": message}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+
+class SessionViewSet(viewsets.ModelViewSet):
+    queryset = Session.objects.all()
+    serializer_class = SessionSerializer
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.is_updateble_session() is False:
+            return self.http_method_not_allowed(request, *args, **kwargs)
+
+        return super().update(request, *args, **kwargs)
+
+    def http_method_not_allowed(self, request, *args, **kwargs):
+        message = "Method PUT is not available for that session"
+        return Response({"message": message}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def get_permissions(self):
+        if self.action == "list" or self.action == "retrieve":
+            self.permission_classes = [permissions.AllowAny]
+        else:
+            self.permission_classes = [IsStaffOnly]
+
+        return [permission() for permission in self.permission_classes]
