@@ -140,6 +140,24 @@ class SessionSerializer(serializers.ModelSerializer):
             )
         return price
 
+    def is_session_date_between(self, session_date, date_start, date_end):
+        if isinstance(session_date, date) and isinstance(date_start, date) and isinstance(date_end, date):
+            if not (date_start <= session_date <= date_end):
+                raise serializers.ValidationError(
+                    self.default_error_messages['invalid_date'],
+                    code='invalid_date'
+                )
+            return True
+
+    def validate_time(self, time_start, time_end, session_date, hall, session_pk=None):
+        if isinstance(time_start, time) and isinstance(time_end, time):
+            if (Session.objects.exists_session_by_time(time_end, session_date, hall)
+                    or Session.objects.exists_session_by_time(time_start, session_date, hall, session_pk)):
+                raise serializers.ValidationError(
+                    self.default_error_messages['invalid_session'],
+                    code=["invalid_session"]
+                )
+
     def validate(self, data):
         session_date = data.get('session_date')
         date_start = data.get('date_start')
@@ -148,29 +166,12 @@ class SessionSerializer(serializers.ModelSerializer):
         time_end = data.get('time_end')
         hall = data['hall']
         instance = self.instance
-        if isinstance(session_date, date) and isinstance(date_start, date) and isinstance(date_end, date):
-            if not (date_start <= session_date <= date_end):
-                raise serializers.ValidationError(
-                    self.default_error_messages['invalid_date'],
-                    code='invalid_date'
-                )
+        if self.is_session_date_between(session_date, date_start, date_end):
             if self.context['view'].action == "create":
-                if isinstance(time_start, time) and isinstance(time_end, time):
-                    if (Session.objects.exists_session_by_time(time_end, session_date, hall)
-                            or Session.objects.exists_session_by_time(time_start, session_date, hall)):
-                        raise serializers.ValidationError(
-                            self.default_error_messages['invalid_session'],
-                            code=["invalid_session"]
-                        )
+                self.validate_time(time_start, time_end, session_date, hall)
             if self.context['view'].action == "update":
                 if isinstance(time_start, time) and isinstance(time_end, time):
-                    if (Session.objects.exists_session_by_time(time_end, session_date, hall, session_pk=instance.pk)
-                            or Session.objects.exists_session_by_time(time_start, session_date, hall,
-                                                                      session_pk=instance.pk)):
-                        raise serializers.ValidationError(
-                            self.default_error_messages['invalid_session'],
-                            code='invalid_session'
-                        )
+                    self.validate_time(time_start, time_end, session_date, hall, session_pk=instance.pk)
                 else:
                     raise serializers.ValidationError(
                         self.default_error_messages['invalid_time'],

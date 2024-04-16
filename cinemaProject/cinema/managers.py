@@ -11,4 +11,5 @@ class SessionManager(models.Manager):
         )
         if session_pk is not None:
             queryset = queryset.exclude(pk=session_pk)
+        print(queryset.exists())
         return queryset.exists()
