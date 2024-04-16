@@ -2,7 +2,7 @@ from datetime import date, time
 
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from cinema.models import MovieHall, Session
+from cinema.models import MovieHall, Session, SessionSeat, Movie
 from rest_framework.authtoken.models import Token
 
 User = get_user_model()
@@ -183,3 +183,49 @@ class SessionSerializer(serializers.ModelSerializer):
                         code="invalid_time"
                     )
         return data
+
+
+class MovieHallReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MovieHall
+        fields = ["id", "name", "rows", "seats_per_row"]
+
+
+class MovieReadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Movie
+        fields = ["id", "name", "image", "rating"]
+
+
+class SessionReadSerializer(serializers.ModelSerializer):
+    hall = MovieHallReadSerializer()
+    movie = MovieReadSerializer()
+
+    class Meta:
+        model = Session
+        fields = ["id", "movie", "time_start", "time_end", "date_start", "date_end", "session_date", "price", "hall"]
+
+
+class SessionSeatSerializer(serializers.ModelSerializer):
+    session = SessionReadSerializer()
+
+    class Meta:
+        model = SessionSeat
+        fields = ["id", "session", "seat", "order"]
+
+
+class UserOrdersSerializer(serializers.ModelSerializer):
+    orders = serializers.SerializerMethodField(read_only=True)
+    total_spent = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ["id", "username", "email", "first_name", "last_name", "orders", "total_spent"]
+
+    def get_orders(self, obj):
+        seats = SessionSeat.objects.select_related("order", "session__movie", "seat").filter(order__user=obj)
+        serializer = SessionSeatSerializer(seats, many=True)
+        return serializer.data
+
+    def get_total_spent(self, obj):
+        return obj.total_spent()

@@ -8,6 +8,7 @@ from api.serializers import (
     AuthUserSerializer,
     MovieHallSerializer,
     SessionSerializer,
+    UserOrdersSerializer,
 )
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from rest_framework import viewsets, permissions, status, serializers
@@ -35,6 +36,12 @@ class UserViewSet(viewsets.ModelViewSet):
             self.permission_classes = [IsOwnerOrAdminOnly]
 
         return [permission() for permission in self.permission_classes]
+
+    @action(methods=["GET"], detail=True)
+    def orders(self, request, pk=None):
+        user = User.objects.get(pk=pk)
+        serializer = UserOrdersSerializer(user)
+        return Response(serializer.data)
 
 
 class AuthViewSet(viewsets.GenericViewSet):
