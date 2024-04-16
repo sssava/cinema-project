@@ -1,3 +1,5 @@
+from datetime import date, datetime, timedelta
+
 from api.serializers import (
     UserSerializer,
     EmptySerializer,
@@ -110,6 +112,29 @@ class MovieHallViewSet(viewsets.ModelViewSet):
 class SessionViewSet(viewsets.ModelViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
+    ordering_fields = ['price', '-price', "time_start", "-time_start"]
+
+    def ordering(self, queryset):
+        ordering = self.request.query_params.get('ordering')
+        if ordering in self.ordering_fields:
+            queryset = queryset.order_by(ordering)
+        return queryset
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.filter(
+            session_date=date.today(),
+            time_start__gte=datetime.now().time()
+        )
+        return self.ordering(queryset)
+
+    @action(methods=["GET"], detail=False)
+    def tomorrow(self, request):
+        tomorrow = date.today() + timedelta(days=1)
+        queryset = self.queryset.filter(session_date=tomorrow)
+        queryset = self.ordering(queryset)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -123,7 +148,7 @@ class SessionViewSet(viewsets.ModelViewSet):
         return Response({"message": message}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def get_permissions(self):
-        if self.action == "list" or self.action == "retrieve":
+        if self.action == "list" or self.action == "retrieve" or self.action == "tomorrow":
             self.permission_classes = [permissions.AllowAny]
         else:
             self.permission_classes = [IsStaffOnly]

@@ -98,6 +98,7 @@ class MovieHallSerializer(serializers.ModelSerializer):
 
 class SessionSerializer(serializers.ModelSerializer):
     url = serializers.HyperlinkedIdentityField(read_only=True, view_name="session-detail")
+    available_seats = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Session
@@ -111,7 +112,8 @@ class SessionSerializer(serializers.ModelSerializer):
             "date_end",
             "session_date",
             "price",
-            "hall"
+            "hall",
+            "available_seats"
         ]
 
     default_error_messages = {
@@ -120,6 +122,9 @@ class SessionSerializer(serializers.ModelSerializer):
         "invalid_price": "price should be bigger than 0",
         "invalid_time": "invalid format time"
     }
+
+    def get_available_seats(self, obj):
+        return obj.get_available_seats
 
     def create(self, validated_data):
         session = Session.objects.create(**validated_data)
