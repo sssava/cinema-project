@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from .managers import SessionManager
+from datetime import date
 
 User = get_user_model()
 
@@ -164,12 +165,16 @@ class Session(models.Model):
             session_seats.append(SessionSeat(session=self, seat=seat))
         SessionSeat.objects.bulk_create(session_seats)
 
-    def is_updateble_session(self):
+    def is_session_seats_booked(self):
         return not self.session_seats.filter(is_booked=True).exists()
 
     def delete_session_seats(self):
-        if self.is_updateble_session():
+        if self.is_session_seats_booked():
             self.session_seats.all().delete()
+
+    def date_check(self):
+        days_difference = (self.session_date - date.today()).days
+        return date.today() > self.session_date or days_difference >= 2
 
 
 class Order(models.Model):

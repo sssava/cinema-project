@@ -1,5 +1,5 @@
 from datetime import date, datetime, timedelta
-
+from rest_framework import generics
 from api.serializers import (
     UserSerializer,
     EmptySerializer,
@@ -9,6 +9,8 @@ from api.serializers import (
     MovieHallSerializer,
     SessionSerializer,
     UserOrdersSerializer,
+    SessionSeatSerializer,
+    SessionSeatListSerializer
 )
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from rest_framework import viewsets, permissions, status, serializers
@@ -17,7 +19,8 @@ from api.custom_permissions import IsOwnerOrAdminOnly, IsStaffOnly
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from cinema.models import MovieHall, Session
+from cinema.models import MovieHall, Session, SessionSeat
+from django.http import JsonResponse
 
 User = get_user_model()
 
@@ -39,7 +42,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(methods=["GET"], detail=True)
     def orders(self, request, pk=None):
-        user = User.objects.get(pk=pk)
+        user = self.get_object()
         serializer = UserOrdersSerializer(user)
         return Response(serializer.data)
 
@@ -145,7 +148,7 @@ class SessionViewSet(viewsets.ModelViewSet):
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.is_updateble_session() is False:
+        if instance.is_session_seats_booked() is False:
             return self.http_method_not_allowed(request, *args, **kwargs)
 
         return super().update(request, *args, **kwargs)
@@ -161,3 +164,57 @@ class SessionViewSet(viewsets.ModelViewSet):
             self.permission_classes = [IsStaffOnly]
 
         return [permission() for permission in self.permission_classes]
+
+
+class SessionSeatDetail(generics.RetrieveUpdateAPIView):
+    queryset = SessionSeat.objects.all()
+    serializer_class = SessionSeatSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        session_pk = self.kwargs.get('session_pk')
+        session_seats = self.queryset.filter(session_id=session_pk, is_booked=False)
+        serializer = self.get_serializer(session_seats, many=True)
+        return Response(serializer.data)
+
+    def put(self, request, *args, **kwargs):
+        session_pk = self.kwargs.get('session_pk')
+        session_seats = self.queryset.filter(session_id=session_pk, is_booked=False)
+        serializer = self.get_serializer(session_seats, data=request.data, many=True)
+        if self.is_booked(validated_data=serializer.initial_data) is False:
+            if self.is_buying(user=request.user, data=serializer.initial_data) is False:
+                print("hi")
+                return Response(data={"error": "you have not enough money"})
+            else:
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return Response(serializer.data)
+        else:
+            return Response(data={"error": "Seats that you chose already have chosen"})
+
+    def is_buying(self, user, data):
+        count_seats = len(data)
+        session = Session.objects.get(pk=data[0]["session"])
+        session_price = session.price
+        return count_seats * session_price <= user.money
+
+    def is_booked(self, validated_data):
+        for data in validated_data:
+            try:
+                session_seat = SessionSeat.objects.get(pk=data["id"], is_booked=False)
+            except Exception as e:
+                return True
+        return False
+
+    def dispatch(self, request, *args, **kwargs):
+        session_pk = self.kwargs.get('session_pk')
+        try:
+            session = Session.objects.get(pk=session_pk)
+            if session.date_check():
+                return JsonResponse({"error": "This session is unavailable"}, status=400)
+            if session.get_available_seats == 0:
+                return JsonResponse({"error": "Seats on that session are sold"}, status=400)
+        except ObjectDoesNotExist as e:
+            return JsonResponse({"error": "No session"}, status=400)
+
+        return super().dispatch(request, *args, **kwargs)

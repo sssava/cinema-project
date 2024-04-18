@@ -45,7 +45,7 @@
                     {% if session.hall.is_updateble_hall %}
                       <a href="{% url 'update-hall' pk=session.hall.id %}"><button type="button" class="btn btn-primary">Update Hall</button></a>
                     {% endif %}
-                    {% if session.is_updateble_session %}
+                    {% if session.is_session_seats_booked %}
                       <a href="{% url 'update-session' pk=session.id %}"><button type="button" class="btn btn-primary mt-2">Update Session</button></a>
                     {% endif %}
                 {% endif %}

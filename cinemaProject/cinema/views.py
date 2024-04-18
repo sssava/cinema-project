@@ -95,7 +95,7 @@ class SessionDetail(LoginRequiredMixin, DetailView):
 
     def get(self, request, *args, **kwargs):
         session = self.get_object()
-        if not session.session_seats.filter(is_booked=False).exists():
+        if session.get_available_seats == 0:
             messages.error(request, "Seats on that session are sold")
             return redirect("index")
         return super().get(request, *args, **kwargs)
@@ -104,6 +104,14 @@ class SessionDetail(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context["session_seats"] = self.object.session_seats.filter(is_booked=False)
         return context
+
+    def dispatch(self, request, *args, **kwargs):
+        session = self.get_object()
+        print(session.date_check())
+        if session.date_check():
+            messages.error(request, "This session is unavailable")
+            return redirect('index')
+        return super().dispatch(request, *args, **kwargs)
 
 
 class MovieHallUpdateView(StaffRequiredMixin, UpdateView):
@@ -163,14 +171,14 @@ class SessionUpdateView(StaffRequiredMixin, UpdateView):
 
     def dispatch(self, request, *args, **kwargs):
         session_instance = self.get_object()
-        if not session_instance.is_updateble_session():
+        if not session_instance.is_session_seats_booked():
             messages.error(request, "This session can`t be updated, because it has booked seats")
             return redirect("index")
         return super().dispatch(request, *args, **kwargs)
 
     def post(self, request, *args, **kwargs):
         session_instance = self.get_object()
-        if not session_instance.is_updateble_session():
+        if not session_instance.is_session_seats_booked():
             messages.error(request, "This session can`t be updated, because it has booked seats")
             return redirect("index")
         return super().post(request, *args, **kwargs)
