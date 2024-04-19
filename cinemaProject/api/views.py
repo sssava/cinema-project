@@ -61,6 +61,7 @@ class AuthViewSet(viewsets.GenericViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = self._get_and_authenticate_user(**serializer.validated_data)
+        user.update_last_request()
         data = AuthUserSerializer(user).data
         return Response(data=data, status=status.HTTP_200_OK)
 
