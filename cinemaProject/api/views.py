@@ -21,6 +21,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from cinema.models import MovieHall, Session, SessionSeat
 from django.http import JsonResponse
+from api.filters import CustomSessionSortingFilter
 
 User = get_user_model()
 
@@ -123,6 +124,7 @@ class MovieHallViewSet(viewsets.ModelViewSet):
 class SessionViewSet(viewsets.ModelViewSet):
     queryset = Session.objects.all()
     serializer_class = SessionSerializer
+    filter_backends = [CustomSessionSortingFilter]
     ordering_fields = ['price', '-price', "time_start", "-time_start"]
 
     def ordering(self, queryset):
@@ -184,20 +186,22 @@ class SessionSeatDetail(generics.RetrieveUpdateAPIView):
         serializer = self.get_serializer(session_seats, data=request.data, many=True)
         if self.is_booked(validated_data=serializer.initial_data) is False:
             if self.is_buying(user=request.user, data=serializer.initial_data) is False:
-                print("hi")
                 return Response(data={"error": "you have not enough money"})
             else:
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
                 return Response(serializer.data)
         else:
-            return Response(data={"error": "Seats that you chose already have chosen"})
+            return Response(data={"error": "Seats that you chose already have chosen or dont exist"})
 
     def is_buying(self, user, data):
         count_seats = len(data)
-        session = Session.objects.get(pk=data[0]["session"])
-        session_price = session.price
-        return count_seats * session_price <= user.money
+        try:
+            session = Session.objects.get(pk=data[0]["session"])
+            session_price = session.price
+            return count_seats * session_price <= user.money
+        except Exception as e:
+            return Response(data={"error": "error"})
 
     def is_booked(self, validated_data):
         for data in validated_data:

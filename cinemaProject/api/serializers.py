@@ -233,6 +233,7 @@ class UserOrdersSerializer(serializers.ModelSerializer):
 
 
 class SessionSeatListSerializer(serializers.ListSerializer):
+
     def update(self, queryset, validated_data, child=None):
         user = self.context['request'].user
         session = queryset[0].session
