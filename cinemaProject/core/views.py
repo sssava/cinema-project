@@ -1,7 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.messages.views import SuccessMessageMixin
-from django.shortcuts import render
 from core.forms import CustomAuthenticationForm, CustomUserCreationForm
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, TemplateView

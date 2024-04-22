@@ -107,7 +107,6 @@ class SessionDetail(LoginRequiredMixin, DetailView):
 
     def dispatch(self, request, *args, **kwargs):
         session = self.get_object()
-        print(session.date_check())
         if session.date_check():
             messages.error(request, "This session is unavailable")
             return redirect('index')

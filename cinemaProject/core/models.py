@@ -17,9 +17,10 @@ class User(AbstractUser):
         return f"{self.username}, {self.last_request}"
 
     def save(self, *args, **kwargs):
-        if self.last_request.tzinfo is None:
-            self.last_request = make_aware(self.last_request)
-        self.last_request = timezone.localtime(self.last_request)
+        if self.last_request:
+            if self.last_request.tzinfo is None:
+                self.last_request = make_aware(self.last_request)
+            self.last_request = timezone.localtime(self.last_request)
 
         if not self.pk:
             self.money = 200
